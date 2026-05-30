@@ -13,7 +13,12 @@
             {{ t(`text.regenerate`) }}
           </button>
 
-          <button type="button" class="download-btn" @click="openQualityModal('all')">
+          <button
+            type="button"
+            class="download-btn"
+            :disabled="making"
+            @click="openQualityModal('all')"
+          >
             {{
               making
                 ? `${t('text.downloadingMultiple')}(${madeCount}/${
@@ -91,6 +96,11 @@ const pendingDownloadAction = ref<'single' | 'all'>('all')
 const pendingSingleIndex = ref(0)
 
 function openQualityModal(action: 'single' | 'all', avatarIndex = 0) {
+  // 批量打包进行中时，仅禁止再次触发「下载全部」
+  if (action === 'all' && making.value) {
+    return
+  }
+
   pendingDownloadAction.value = action
   pendingSingleIndex.value = avatarIndex
   downloadQualityVisible.value = true
@@ -124,29 +134,30 @@ async function handleDownload(avatarIndex: number, quality: DownloadQuality) {
 }
 
 async function make(quality: DownloadQuality) {
-  if (props.avatarList && !making.value) {
-    making.value = true
-    madeCount.value = 1
+  if (!props.avatarList || making.value) {
+    return
+  }
 
+  making.value = true
+  madeCount.value = 0
+
+  try {
     const { default: JSZip } = await import('jszip')
     const jsZip = new JSZip()
     const extension = getDownloadExtension(quality)
 
-    for (let i = 0; i <= props.avatarList.length; i += 1) {
+    for (let i = 0; i < props.avatarList.length; i += 1) {
       const dom = window.document.querySelector(`#avatar-${i}`)
 
       if (dom instanceof HTMLElement) {
         const { dataURL } = await captureAvatarElement(dom, quality)
         const dataUrl = dataURL.replace(/^data:image\/\w+;base64,/, '')
         jsZip.file(`${i + 1}.${extension}`, dataUrl, { base64: true })
-        madeCount.value = madeCount.value += 1
+        madeCount.value += 1
       }
     }
 
     const base64 = await jsZip.generateAsync({ type: 'base64' })
-
-    making.value = false
-    madeCount.value = 0
 
     const a = window.document.createElement('a')
     a.href = 'data:application/zip;base64,' + base64
@@ -156,6 +167,9 @@ async function make(quality: DownloadQuality) {
     recordEvent('click_download_multiple', {
       event_category: 'click',
     })
+  } finally {
+    making.value = false
+    madeCount.value = 0
   }
 }
 </script>
@@ -252,7 +266,6 @@ async function make(quality: DownloadQuality) {
         color: var.$color-text;
         font-weight: bold;
         background: var.$color-gray;
-        border-radius: 0.4rem;
         border-radius: 0.6rem;
         transform: translateX(-50%);
         cursor: pointer;
