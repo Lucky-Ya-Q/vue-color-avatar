@@ -1,33 +1,30 @@
 <template>
   <footer class="footer">
-    <div
-      data-message="If you are deploying to your own public website, please do not modify it unless you have permission from the original author."
-    >
-      Made by
-      <a
-        class="link"
-        href="https://leoku.top"
-        target="_blank"
-        rel="nofollow noopener noreferrer"
-      >
-        LeoKu
-      </a>
-    </div>
+    <div class="changelog-trigger" @click="changelogVisible = true">更新日志</div>
 
     <div class="divider">|</div>
 
     <div class="locale" @click="switchLocale">
       {{ locale === Locale.EN ? '简体中文' : 'English' }}
     </div>
+
+    <ChangelogModal
+      :visible="changelogVisible"
+      @close="changelogVisible = false"
+    />
   </footer>
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import ChangelogModal from '@/components/Modal/ChangelogModal.vue'
 import { Locale } from '@/enums'
 
 const { locale } = useI18n()
+
+const changelogVisible = ref(false)
 
 function switchLocale() {
   locale.value = locale.value === Locale.EN ? Locale.ZH : Locale.EN
@@ -51,12 +48,9 @@ function switchLocale() {
     padding: 0 1rem;
   }
 
+  .changelog-trigger,
   .locale {
     cursor: pointer;
-  }
-
-  .link,
-  .locale {
     transition: color 0.2s;
 
     &:hover {
