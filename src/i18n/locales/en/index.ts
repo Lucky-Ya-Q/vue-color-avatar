@@ -17,6 +17,10 @@ export const en = {
   label: {
     wrapperShape: 'Avatar Shape',
     borderColor: 'Border Color',
+    // Border color mode labels when randomizing avatars
+    borderColorOnRandomize: 'When randomizing',
+    borderColorKeep: 'Keep current',
+    borderColorRandom: 'Random',
     backgroundColor: 'Background Color',
     colors: 'colors',
   },

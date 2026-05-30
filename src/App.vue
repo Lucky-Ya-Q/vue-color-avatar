@@ -129,6 +129,9 @@ const { t } = useI18n()
 const colorAvatarRef = ref<VueColorAvatarRef>()
 
 function handleGenerate() {
+  // 读取侧边栏「边框颜色」下的随机生成模式设置
+  const keepBorderColor = store.borderColorRandomMode === 'keep'
+
   if (Math.random() <= TRIGGER_PROBABILITY) {
     let colorfulOption = getSpecialAvatarOption()
     while (
@@ -137,10 +140,21 @@ function handleGenerate() {
       colorfulOption = getSpecialAvatarOption()
     }
     colorfulOption.wrapperShape = avatarOption.value.wrapperShape
+    // 彩蛋头像同样尊重边框颜色的沿用设置
+    if (keepBorderColor) {
+      colorfulOption.background = {
+        ...colorfulOption.background,
+        borderColor: avatarOption.value.background.borderColor,
+      }
+    }
     setAvatarOption(colorfulOption)
     showConfetti()
   } else {
-    const randomOption = getRandomAvatarOption(avatarOption.value)
+    const randomOption = getRandomAvatarOption(
+      avatarOption.value,
+      {},
+      { keepBorderColor }
+    )
     setAvatarOption(randomOption)
   }
 
@@ -240,6 +254,8 @@ watchEffect(() => {
 
 async function generateMultiple(count = 5 * 6) {
   const { default: hash } = await import('object-hash')
+  // 批量生成时与单次随机生成共用同一套边框颜色模式
+  const keepBorderColor = store.borderColorRandomMode === 'keep'
 
   const avatarMap = [...Array(count)].reduce<Map<string, AvatarOption>>(
     (res) => {
@@ -247,7 +263,11 @@ async function generateMultiple(count = 5 * 6) {
       let hashKey: string
 
       do {
-        randomAvatarOption = getRandomAvatarOption(avatarOption.value)
+        randomAvatarOption = getRandomAvatarOption(
+          avatarOption.value,
+          {},
+          { keepBorderColor }
+        )
         hashKey = hash.sha1(randomAvatarOption)
       } while (
         randomAvatarOption.background.color === 'transparent' ||

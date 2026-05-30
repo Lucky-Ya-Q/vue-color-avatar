@@ -8,9 +8,13 @@ import { SCREEN } from '@/utils/constant'
 import {
   REDO,
   SET_AVATAR_OPTION,
+  SET_BORDER_COLOR_RANDOM_MODE,
   SET_SIDER_STATUS,
   UNDO,
 } from './mutation-type'
+
+/** 随机生成时边框颜色的处理模式 */
+export type BorderColorRandomMode = 'keep' | 'random'
 
 export interface State {
   history: {
@@ -19,6 +23,8 @@ export interface State {
     future: AvatarOption[]
   }
   isSiderCollapsed: boolean
+  /** 随机生成时是否沿用当前边框颜色 */
+  borderColorRandomMode: BorderColorRandomMode
 }
 
 export const useStore = defineStore('store', {
@@ -30,6 +36,8 @@ export const useStore = defineStore('store', {
         future: [],
       },
       isSiderCollapsed: window.innerWidth <= SCREEN.lg,
+      // 默认随机边框颜色，与改动前行为一致
+      borderColorRandomMode: 'random',
     } as State),
   actions: {
     [SET_AVATAR_OPTION](data: AvatarOption) {
@@ -68,6 +76,11 @@ export const useStore = defineStore('store', {
       if (collapsed !== this.isSiderCollapsed) {
         this.isSiderCollapsed = collapsed
       }
+    },
+
+    /** 切换随机生成时的边框颜色模式 */
+    [SET_BORDER_COLOR_RANDOM_MODE](mode: BorderColorRandomMode) {
+      this.borderColorRandomMode = mode
     },
   },
 })

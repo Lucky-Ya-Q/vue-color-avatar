@@ -38,9 +38,17 @@ export function getRandomFillColor(colors = SETTINGS.commonColors) {
   return colors[Math.floor(Math.random() * colors.length)]
 }
 
+/** 随机生成头像时的额外配置项 */
+export interface GetRandomAvatarOptionConfig {
+  /** 为 true 时沿用 presetOption 中的边框颜色，否则从色板随机选取 */
+  keepBorderColor?: boolean
+}
+
 export function getRandomAvatarOption(
   presetOption: Partial<AvatarOption> = {},
-  useOption: Partial<AvatarOption> = {}
+  useOption: Partial<AvatarOption> = {},
+  /** 控制部分字段是否在随机生成时被保留 */
+  config: GetRandomAvatarOptionConfig = {}
 ): AvatarOption {
   const gender = getRandomValue(SETTINGS.gender)
 
@@ -75,10 +83,14 @@ export function getRandomAvatarOption(
             hairColor, // Handle special cases and prevent color conflicts.
         ],
       }),
-      borderColor: getRandomValue(SETTINGS.borderColor, {
-        avoid: [useOption.background?.color],
-        usually: ['transparent'],
-      }),
+      // 根据配置决定沿用当前边框色，或从预设色板中随机选取
+      borderColor:
+        config.keepBorderColor && presetOption.background?.borderColor != null
+          ? presetOption.background.borderColor
+          : getRandomValue(SETTINGS.borderColor, {
+              avoid: [useOption.background?.color],
+              usually: ['transparent'],
+            }),
     },
 
     widgets: {

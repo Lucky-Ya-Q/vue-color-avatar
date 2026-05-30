@@ -22,6 +22,31 @@
       </SectionWrapper>
 
       <SectionWrapper :title="t('label.borderColor')">
+        <!-- 控制随机生成 / 批量生成时边框颜色是沿用当前还是重新随机 -->
+        <div class="border-color-mode">
+          <span class="border-color-mode__label">
+            {{ t('label.borderColorOnRandomize') }}
+          </span>
+          <div class="border-color-mode__options">
+            <button
+              type="button"
+              class="mode-btn"
+              :class="{ active: borderColorRandomMode === 'keep' }"
+              @click="setBorderColorRandomMode('keep')"
+            >
+              {{ t('label.borderColorKeep') }}
+            </button>
+            <button
+              type="button"
+              class="mode-btn"
+              :class="{ active: borderColorRandomMode === 'random' }"
+              @click="setBorderColorRandomMode('random')"
+            >
+              {{ t('label.borderColorRandom') }}
+            </button>
+          </div>
+        </div>
+
         <ul class="color-list">
           <li
             v-for="borderColor in SETTINGS.borderColor"
@@ -119,6 +144,7 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
 
 import PerfectScrollbar from '@/components/PerfectScrollbar.vue'
 import SectionWrapper from '@/components/SectionWrapper.vue'
@@ -129,10 +155,16 @@ import {
   WidgetType,
 } from '@/enums'
 import { useAvatarOption } from '@/hooks'
+import { useStore, type BorderColorRandomMode } from '@/store'
+import { SET_BORDER_COLOR_RANDOM_MODE } from '@/store/mutation-type'
 import { AVATAR_LAYER, SETTINGS } from '@/utils/constant'
 import { previewData } from '@/utils/dynamic-data'
 
 const { t } = useI18n()
+
+const store = useStore()
+// 边框颜色在随机生成时的模式：keep 沿用当前，random 重新随机
+const { borderColorRandomMode } = storeToRefs(store)
 
 const [avatarOption, setAvatarOption] = useAvatarOption()
 
@@ -192,6 +224,13 @@ async function getWidgets(widgetType: WidgetType) {
 function switchWrapperShape(wrapperShape: WrapperShape) {
   if (wrapperShape !== avatarOption.value.wrapperShape) {
     setAvatarOption({ ...avatarOption.value, wrapperShape })
+  }
+}
+
+/** 切换随机生成时的边框颜色模式，写入全局 store 供 App 读取 */
+function setBorderColorRandomMode(mode: BorderColorRandomMode) {
+  if (mode !== borderColorRandomMode.value) {
+    store[SET_BORDER_COLOR_RANDOM_MODE](mode)
   }
 }
 
@@ -272,6 +311,41 @@ function getWidgetColor(type: string) {
 .configurator {
   width: 100%;
   color: var.$color-text;
+
+  // 边框颜色随机模式切换区域
+  .border-color-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+
+    &__label {
+      color: darken(var.$color-text, 20);
+      font-size: small;
+    }
+
+    &__options {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 0.45rem 0.75rem;
+      color: var.$color-text;
+      font-size: 0.85rem;
+      background-color: lighten(var.$color-configurator, 4);
+      border: 1px solid transparent;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+
+      &.active {
+        background-color: lighten(var.$color-configurator, 8);
+        border-color: var.$color-accent;
+      }
+    }
+  }
 
   .wrapper-shape {
     display: flex;

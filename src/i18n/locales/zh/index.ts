@@ -17,6 +17,10 @@ export const zh = {
   label: {
     wrapperShape: '头像形状',
     borderColor: '边框颜色',
+    // 随机生成时边框颜色的模式选项文案
+    borderColorOnRandomize: '随机生成时',
+    borderColorKeep: '沿用此配置',
+    borderColorRandom: '随机',
     backgroundColor: '背景颜色',
     colors: '颜色',
   },
