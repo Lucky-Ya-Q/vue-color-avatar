@@ -45,6 +45,10 @@ export const zh = {
   text: {
     codeModalTitle: '配置代码',
     downloadTip: '长按图片或右键点击下载至本地相册',
+    downloadQualityTitle: '选择下载画质',
+    downloadQualityTip: '头像由页面渲染后导出为图片，非 SVG 矢量原文件',
+    downloadQualityOriginal: '原图',
+    downloadQualityCompressed: '压缩',
     downloadMultiple: '下载全部',
     downloadingMultiple: '正在下载',
     downloadMultipleTip: '已为你自动生成头像',

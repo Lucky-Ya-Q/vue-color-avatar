@@ -13,7 +13,7 @@
             {{ t(`text.regenerate`) }}
           </button>
 
-          <button type="button" class="download-btn" @click="make">
+          <button type="button" class="download-btn" @click="openQualityModal('all')">
             {{
               making
                 ? `${t('text.downloadingMultiple')}(${madeCount}/${
@@ -38,7 +38,7 @@
               >
                 <VueColorAvatar :id="`avatar-${i}`" :option="opt" :size="280" />
 
-                <button class="download-single" @click="handleDownload(i)">
+                <button class="download-single" @click="openQualityModal('single', i)">
                   {{ t('action.download') }}
                 </button>
               </div>
@@ -47,6 +47,12 @@
         </PerfectScrollbar>
       </div>
     </div>
+
+    <DownloadQualityModal
+      :visible="downloadQualityVisible"
+      @close="downloadQualityVisible = false"
+      @select="handleQualitySelect"
+    />
   </ModalWrapper>
 </template>
 
@@ -57,9 +63,16 @@ import { useI18n } from 'vue-i18n'
 import PerfectScrollbar from '@/components/PerfectScrollbar.vue'
 import VueColorAvatar from '@/components/VueColorAvatar.vue'
 import type { AvatarOption } from '@/types'
+import {
+  captureAvatarElement,
+  getDownloadExtension,
+  triggerFileDownload,
+  type DownloadQuality,
+} from '@/utils/download'
 import { recordEvent } from '@/utils/ga'
 
 import { name as appName } from '../../../package.json'
+import DownloadQualityModal from './DownloadQualityModal.vue'
 import ModalWrapper from './ModalWrapper.vue'
 
 const props = defineProps<{ visible?: boolean; avatarList?: AvatarOption[] }>()
@@ -73,21 +86,36 @@ const { t } = useI18n()
 
 const making = ref(false)
 const madeCount = ref(0)
+const downloadQualityVisible = ref(false)
+const pendingDownloadAction = ref<'single' | 'all'>('all')
+const pendingSingleIndex = ref(0)
 
-async function handleDownload(avatarIndex) {
+function openQualityModal(action: 'single' | 'all', avatarIndex = 0) {
+  pendingDownloadAction.value = action
+  pendingSingleIndex.value = avatarIndex
+  downloadQualityVisible.value = true
+}
+
+async function handleQualitySelect(quality: DownloadQuality) {
+  downloadQualityVisible.value = false
+
+  if (pendingDownloadAction.value === 'single') {
+    await handleDownload(pendingSingleIndex.value, quality)
+    return
+  }
+
+  await make(quality)
+}
+
+async function handleDownload(avatarIndex: number, quality: DownloadQuality) {
   const avatarEle = window.document.querySelector(`#avatar-${avatarIndex}`)
 
   if (avatarEle instanceof HTMLElement) {
-    const html2canvas = (await import('html2canvas')).default
-    const canvas = await html2canvas(avatarEle, {
-      backgroundColor: null,
-    })
-    const dataURL = canvas.toDataURL()
-
-    const trigger = document.createElement('a')
-    trigger.href = dataURL
-    trigger.download = `${appName}.png`
-    trigger.click()
+    const { dataURL, extension } = await captureAvatarElement(
+      avatarEle,
+      quality
+    )
+    triggerFileDownload(dataURL, `${appName}.${extension}`)
   }
 
   recordEvent('click_download', {
@@ -95,26 +123,22 @@ async function handleDownload(avatarIndex) {
   })
 }
 
-async function make() {
+async function make(quality: DownloadQuality) {
   if (props.avatarList && !making.value) {
     making.value = true
     madeCount.value = 1
 
-    const html2canvas = (await import('html2canvas')).default
-
     const { default: JSZip } = await import('jszip')
     const jsZip = new JSZip()
+    const extension = getDownloadExtension(quality)
 
     for (let i = 0; i <= props.avatarList.length; i += 1) {
       const dom = window.document.querySelector(`#avatar-${i}`)
 
       if (dom instanceof HTMLElement) {
-        const canvas = await html2canvas(dom, {
-          backgroundColor: null,
-        })
-
-        const dataUrl = canvas.toDataURL().replace('data:image/png;base64,', '')
-        jsZip.file(`${i + 1}.png`, dataUrl, { base64: true })
+        const { dataURL } = await captureAvatarElement(dom, quality)
+        const dataUrl = dataURL.replace(/^data:image\/\w+;base64,/, '')
+        jsZip.file(`${i + 1}.${extension}`, dataUrl, { base64: true })
         madeCount.value = madeCount.value += 1
       }
     }

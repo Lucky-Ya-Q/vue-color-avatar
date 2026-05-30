@@ -45,6 +45,11 @@ export const en = {
   text: {
     codeModalTitle: 'Code',
     downloadTip: 'LONG PRESS or RIGHT CLICK to save',
+    downloadQualityTitle: 'Choose download quality',
+    downloadQualityTip:
+      'Avatars are exported as raster images from the page, not SVG source files',
+    downloadQualityOriginal: 'Original',
+    downloadQualityCompressed: 'Compressed',
     downloadMultiple: 'Download All',
     downloadingMultiple: 'Downloading',
     downloadMultipleTip: 'Automatically generated',

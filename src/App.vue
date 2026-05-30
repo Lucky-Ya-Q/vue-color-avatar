@@ -32,7 +32,7 @@
                 type="button"
                 class="action-btn action-download"
                 :disabled="downloading"
-                @click="handleDownload"
+                @click="downloadQualityVisible = true"
               >
                 {{
                   downloading
@@ -54,6 +54,12 @@
           <Footer />
 
           <CodeModal :visible="codeVisible" @close="codeVisible = false" />
+
+          <DownloadQualityModal
+            :visible="downloadQualityVisible"
+            @close="downloadQualityVisible = false"
+            @select="handleDownloadQualitySelect"
+          />
 
           <DownloadModal
             :visible="downloadModalVisible"
@@ -93,6 +99,7 @@ import Configurator from '@/components/Configurator.vue'
 import BatchDownloadModal from '@/components/Modal/BatchDownloadModal.vue'
 import CodeModal from '@/components/Modal/CodeModal.vue'
 import DownloadModal from '@/components/Modal/DownloadModal.vue'
+import DownloadQualityModal from '@/components/Modal/DownloadQualityModal.vue'
 import VueColorAvatar, {
   type VueColorAvatarRef,
 } from '@/components/VueColorAvatar.vue'
@@ -114,6 +121,11 @@ import {
   NOT_COMPATIBLE_AGENTS,
   TRIGGER_PROBABILITY,
 } from '@/utils/constant'
+import {
+  captureAvatarElement,
+  triggerFileDownload,
+  type DownloadQuality,
+} from '@/utils/download'
 import { recordEvent } from '@/utils/ga'
 
 import { name as appName } from '../package.json'
@@ -164,10 +176,16 @@ function handleGenerate() {
 }
 
 const downloadModalVisible = ref(false)
+const downloadQualityVisible = ref(false)
 const downloading = ref(false)
 const imageDataURL = ref('')
 
-async function handleDownload() {
+async function handleDownloadQualitySelect(quality: DownloadQuality) {
+  downloadQualityVisible.value = false
+  await handleDownload(quality)
+}
+
+async function handleDownload(quality: DownloadQuality) {
   try {
     downloading.value = true
     const avatarEle = colorAvatarRef.value?.avatarRef
@@ -178,20 +196,16 @@ async function handleDownload() {
     )
 
     if (avatarEle) {
-      const html2canvas = (await import('html2canvas')).default
-      const canvas = await html2canvas(avatarEle, {
-        backgroundColor: null,
-      })
-      const dataURL = canvas.toDataURL()
+      const { dataURL, extension } = await captureAvatarElement(
+        avatarEle,
+        quality
+      )
 
       if (notCompatible) {
         imageDataURL.value = dataURL
         downloadModalVisible.value = true
       } else {
-        const trigger = document.createElement('a')
-        trigger.href = dataURL
-        trigger.download = `${appName}.png`
-        trigger.click()
+        triggerFileDownload(dataURL, `${appName}.${extension}`)
       }
     }
 

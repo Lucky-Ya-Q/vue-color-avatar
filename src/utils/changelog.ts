@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 /** 本项目相对原版的修改记录，新增条目请写在数组最前面 */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2',
+    date: '2026-05-30',
+    items: [
+      '下载头像、批量下载单张/全部前新增画质选择弹窗',
+      '原图：PNG 高清（840×840）；压缩：PNG 标准（280×280）',
+    ],
+  },
+  {
     version: '1.0.1',
     date: '2026-05-30',
     items: [
